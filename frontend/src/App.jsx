@@ -1,13 +1,19 @@
 import { useState } from "react";
 import "./App.css";
+import jsPDF from "jspdf";
 
 function App() {
   const [department, setDepartment] = useState("");
   const [risk, setRisk] = useState("");
   const [issue, setIssue] = useState("");
   const [report, setReport] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const [history, setHistory] = useState([]);
 
   const generateReport = async () => {
+    setLoading(true);
+
     try {
       const response = await fetch("http://127.0.0.1:5000/generate-report", {
         method: "POST",
@@ -24,84 +30,114 @@ function App() {
       const data = await response.json();
 
       setReport(data.report);
+
+      const newAudit = {
+        department,
+        risk,
+        issue,
+        date: new Date().toLocaleString(),
+      };
+
+      setHistory([newAudit, ...history]);
     } catch (error) {
       console.error(error);
       alert("Error generating report");
     }
+
+    setLoading(false);
+  };
+
+  const downloadPDF = () => {
+    const doc = new jsPDF();
+
+    const lines = doc.splitTextToSize(report, 170);
+
+    doc.setFontSize(18);
+    doc.text("AI Audit Report", 20, 20);
+
+    doc.setFontSize(12);
+    doc.text(lines, 20, 40);
+
+    doc.save("audit-report.pdf");
   };
 
   return (
-    <div style={{ padding: "30px" }}>
-      <h1 style={{ fontSize: "60px" }}>
-        AI Audit Universe Manager
-      </h1>
+    <div className="container">
+      <h1 className="title">AI Audit Universe Manager</h1>
 
       <input
         type="text"
         placeholder="Department"
         value={department}
         onChange={(e) => setDepartment(e.target.value)}
-        style={{
-          width: "300px",
-          padding: "12px",
-          margin: "10px",
-        }}
+        className="input-box"
       />
-
-      <br />
 
       <input
         type="text"
         placeholder="Risk Level"
         value={risk}
         onChange={(e) => setRisk(e.target.value)}
-        style={{
-          width: "300px",
-          padding: "12px",
-          margin: "10px",
-        }}
+        className="input-box"
       />
-
-      <br />
 
       <input
         type="text"
         placeholder="Issue"
         value={issue}
         onChange={(e) => setIssue(e.target.value)}
-        style={{
-          width: "300px",
-          padding: "12px",
-          margin: "10px",
-        }}
+        className="input-box"
       />
-
-      <br />
 
       <button
         onClick={generateReport}
-        style={{
-          padding: "12px 25px",
-          margin: "10px",
-          cursor: "pointer",
-        }}
+        className="generate-btn"
       >
         Generate Report
       </button>
 
+      <br /><br />
+
+      <button
+        onClick={downloadPDF}
+        className="generate-btn"
+      >
+        Download PDF
+      </button>
+
+      {loading && <p>Generating AI Report...</p>}
+
       <h2>Generated Audit Report</h2>
 
-      <div
-        style={{
-          whiteSpace: "pre-wrap",
-          border: "1px solid gray",
-          padding: "20px",
-          borderRadius: "10px",
-          marginTop: "20px",
-        }}
-      >
+      <div className="report-box">
         {report}
       </div>
+
+      <h2 style={{ marginTop: "50px" }}>
+        Audit History
+      </h2>
+
+      <table className="history-table">
+        <thead>
+          <tr>
+            <th>Department</th>
+            <th>Risk</th>
+            <th>Issue</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {history.map((item, index) => (
+            <tr key={index}>
+              <td>{item.department}</td>
+              <td>{item.risk}</td>
+              <td>{item.issue}</td>
+              <td>{item.date}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
