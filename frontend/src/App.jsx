@@ -15,8 +15,6 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-import jsPDF from "jspdf";
-
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
@@ -24,252 +22,265 @@ function App() {
   const [password, setPassword] = useState("");
 
   const [department, setDepartment] = useState("");
-  const [risk, setRisk] = useState("");
+  const [riskLevel, setRiskLevel] = useState("");
   const [issue, setIssue] = useState("");
 
   const [report, setReport] = useState("");
-
-  const [history, setHistory] = useState([
-    {
-      department: "HR",
-      risk: "High",
-      issue: "Employee Data Leak",
-      date: new Date().toLocaleString(),
-    },
-    {
-      department: "Finance",
-      risk: "Critical",
-      issue: "Unauthorized Transactions",
-      date: new Date().toLocaleString(),
-    },
-    {
-      department: "IT",
-      risk: "Medium",
-      issue: "Weak Password Security",
-      date: new Date().toLocaleString(),
-    },
-  ]);
 
   const handleLogin = () => {
     if (username === "admin" && password === "admin123") {
       setIsLoggedIn(true);
     } else {
-      alert("Invalid credentials");
+      alert("Invalid Credentials");
     }
   };
 
-  const generateReport = async () => {
-    try {
-      const response = await fetch("http://127.0.0.1:5000/generate-report", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          department,
-          risk,
-          issue,
-        }),
-      });
+  const generateReport = () => {
+    const generatedReport = `
+Audit Report: ${issue} in ${department} Department
 
-      const data = await response.json();
+Summary:
+An audit was conducted to investigate the issue related to ${issue} in the ${department} department.
 
-      setReport(data.report);
+The audit identified a ${riskLevel} level risk affecting organizational compliance, monitoring systems, and operational efficiency.
 
-      const newAudit = {
-        department,
-        risk,
-        issue,
-        date: new Date().toLocaleString(),
-      };
+The audit found that:
 
-      setHistory([newAudit, ...history]);
-    } catch (error) {
-      console.error(error);
-      setReport("Error generating report");
-    }
+1. Internal monitoring systems were not properly configured.
+2. Security controls lacked regular review procedures.
+3. Employee awareness regarding compliance was insufficient.
+4. Risk management practices were outdated.
+5. Reporting and escalation systems were delayed.
+
+Recommendations:
+
+1. Implement stronger monitoring and compliance systems.
+2. Conduct regular internal audits and risk assessments.
+3. Improve employee cybersecurity and compliance training.
+4. Upgrade outdated security and operational software.
+5. Create automated compliance tracking dashboards.
+6. Establish proper documentation and incident reporting systems.
+
+Implementation Timeline:
+
+Short-term (0–3 months):
+Immediate review and monitoring improvements.
+
+Medium-term (3–6 months):
+Upgrade systems and improve staff audit training.
+
+Long-term (6–12 months):
+Full AI-based compliance and risk management integration.
+
+Conclusion:
+
+By implementing these recommendations, the organization can significantly reduce operational risks, improve compliance, and strengthen overall audit management efficiency.
+`;
+
+    setReport(generatedReport);
   };
 
   const downloadPDF = () => {
-    const doc = new jsPDF();
+    const blob = new Blob([report], { type: "text/plain" });
 
-    const lines = doc.splitTextToSize(report, 180);
+    const link = document.createElement("a");
 
-    doc.text("AI Audit Report", 10, 10);
-    doc.text(lines, 10, 20);
+    link.href = URL.createObjectURL(blob);
 
-    doc.save("audit-report.pdf");
+    link.download = "audit-report.txt";
+
+    link.click();
   };
 
   const pieData = [
-    {
-      name: "High",
-      value: history.filter((item) => item.risk === "High").length,
-    },
-    {
-      name: "Medium",
-      value: history.filter((item) => item.risk === "Medium").length,
-    },
-    {
-      name: "Critical",
-      value: history.filter((item) => item.risk === "Critical").length,
-    },
+    { name: "Risk", value: riskLevel ? 1 : 0 },
+    { name: "Safe", value: riskLevel ? 0 : 1 },
   ];
 
-  const COLORS = ["#ff4d4d", "#ffaa00", "#aa00ff"];
+  const COLORS = ["#ff4d4d", "#00C49F"];
 
-  if (!isLoggedIn) {
-    return (
-      <div className="app">
-        <img src={logo} alt="logo" className="company-logo" />
-
-        <h1>AI Audit Universe Manager</h1>
-
-        <div className="login-box">
-          <input
-            type="text"
-            placeholder="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
-
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-
-          <button onClick={handleLogin}>Login</button>
-        </div>
-
-        <p>Username: admin</p>
-        <p>Password: admin123</p>
-      </div>
-    );
-  }
+  const barData = [
+    { department: "HR", audits: department === "HR" ? 1 : 0 },
+    { department: "Finance", audits: department === "Finance" ? 1 : 0 },
+    { department: "IT", audits: department === "IT" ? 1 : 0 },
+    { department: "Security", audits: department === "Security" ? 1 : 0 },
+  ];
 
   return (
     <div className="app">
-      <img src={logo} alt="logo" className="company-logo" />
 
-      <h1>AI Audit Universe Manager</h1>
+      {!isLoggedIn ? (
+        <div className="login-container">
 
-      <button
-        className="logout-btn"
-        onClick={() => setIsLoggedIn(false)}
-      >
-        Logout
-      </button>
+          <img src={logo} alt="logo" className="company-logo" />
 
-      <div className="input-container">
-        <input
-          type="text"
-          placeholder="Department"
-          value={department}
-          onChange={(e) => setDepartment(e.target.value)}
-        />
+          <h1>AI Audit Universe Manager</h1>
 
-        <input
-          type="text"
-          placeholder="Risk Level"
-          value={risk}
-          onChange={(e) => setRisk(e.target.value)}
-        />
+          <div className="login-box">
 
-        <input
-          type="text"
-          placeholder="Issue"
-          value={issue}
-          onChange={(e) => setIssue(e.target.value)}
-        />
+            <input
+              type="text"
+              placeholder="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+            />
 
-        <button className="generate-btn" onClick={generateReport}>
-          Generate Report
-        </button>
-      </div>
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
 
-      {report && (
-        <>
-          <button className="pdf-btn" onClick={downloadPDF}>
-            Download PDF
-          </button>
+            <button onClick={handleLogin}>Login</button>
 
-          <h2>Generated Audit Report</h2>
+          </div>
 
-          <div className="report-box">{report}</div>
-        </>
-      )}
+          <p>Username: admin</p>
+          <p>Password: admin123</p>
 
-      <div className="charts-container">
-        <div className="chart-box">
-          <h3>Risk Distribution</h3>
+        </div>
+      ) : (
+        <div className="main-content">
 
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={pieData}
-                cx="50%"
-                cy="50%"
-                outerRadius={100}
-                dataKey="value"
-                label
+          <h1>AI Audit Universe Manager</h1>
+
+          <div className="form-section">
+
+            <input
+              type="text"
+              placeholder="Department"
+              value={department}
+              onChange={(e) => setDepartment(e.target.value)}
+            />
+
+            <input
+              type="text"
+              placeholder="Risk Level"
+              value={riskLevel}
+              onChange={(e) => setRiskLevel(e.target.value)}
+            />
+
+            <input
+              type="text"
+              placeholder="Issue"
+              value={issue}
+              onChange={(e) => setIssue(e.target.value)}
+            />
+
+            <button onClick={generateReport}>
+              Generate Report
+            </button>
+
+          </div>
+
+          {report && (
+            <>
+              <button
+                className="download-btn"
+                onClick={downloadPDF}
               >
-                {pieData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={COLORS[index % COLORS.length]}
-                  />
-                ))}
-              </Pie>
+                Download PDF
+              </button>
 
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
+              <div className="report-box">
+
+                <h2>Generated Audit Report</h2>
+
+                <div className="report-text">
+                  {report}
+                </div>
+
+              </div>
+
+              <div className="charts-container">
+
+                <div className="chart-box">
+                  <h2>Risk Distribution</h2>
+
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={pieData}
+                        dataKey="value"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={100}
+                        label
+                      >
+                        {pieData.map((entry, index) => (
+                          <Cell
+                            key={index}
+                            fill={COLORS[index % COLORS.length]}
+                          />
+                        ))}
+                      </Pie>
+
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="chart-box">
+                  <h2>Department Audits</h2>
+
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={barData}>
+
+                      <CartesianGrid strokeDasharray="3 3" />
+
+                      <XAxis dataKey="department" />
+
+                      <YAxis />
+
+                      <Tooltip />
+
+                      <Bar dataKey="audits" fill="#00c4ff" />
+
+                    </BarChart>
+                  </ResponsiveContainer>
+
+                </div>
+
+              </div>
+
+              <div className="history-box">
+
+                <h2>Audit History</h2>
+
+                <table>
+
+                  <thead>
+                    <tr>
+                      <th>Department</th>
+                      <th>Risk Level</th>
+                      <th>Issue</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    <tr>
+                      <td>{department}</td>
+                      <td>{riskLevel}</td>
+                      <td>{issue}</td>
+                    </tr>
+                  </tbody>
+
+                </table>
+
+              </div>
+
+              <button
+                className="logout-btn"
+                onClick={() => setIsLoggedIn(false)}
+              >
+                Logout
+              </button>
+            </>
+          )}
+
         </div>
-
-        <div className="chart-box">
-          <h3>Department Audits</h3>
-
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={history}>
-              <CartesianGrid strokeDasharray="3 3" />
-
-              <XAxis dataKey="department" />
-
-              <YAxis />
-
-              <Tooltip />
-
-              <Bar dataKey="risk.length" fill="#00cfff" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      <h2>Audit History</h2>
-
-      <table className="history-table">
-        <thead>
-          <tr>
-            <th>Department</th>
-            <th>Risk</th>
-            <th>Issue</th>
-            <th>Date</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {history.map((item, index) => (
-            <tr key={index}>
-              <td>{item.department}</td>
-              <td>{item.risk}</td>
-              <td>{item.issue}</td>
-              <td>{item.date}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      )}
     </div>
   );
 }
